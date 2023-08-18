@@ -76,8 +76,8 @@ void loop() {
 	  	Serial.print('button pushed');
       }
   }
-  data = rfid_read();
-  checkcard(data);
+  data = rfid_read();				
+  checkcard(data);		//Says that data is not declared in this scope
 
 }
 
@@ -106,7 +106,7 @@ return (buffer);
 void checkcard(int buffer){
   for (int i = 0; i < num_cards; i++){
     if (buffer == cards[i]){
-	    int LEDState = HIGH;
+	    int LEDState = HIGH;    //not sure if this should be declared as an integer 
     }
 	  else
       int LEDState = LOW;
