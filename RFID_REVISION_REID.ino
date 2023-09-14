@@ -18,6 +18,7 @@ int LEDState[] = {0,0,0};
 int lastState[] = {0,0,0};
 // data of the three cards we use at FBN
 int num_cards = 3;
+byte data[16];
 byte cards[3][16] = {{0x00, 0x01, 0x53, 0x44, // SD-CLR , Clear move
                       0x00, 0x00, 0x00, 0x99, 
                       0x00, 0x05, 0x00, 0x00,
