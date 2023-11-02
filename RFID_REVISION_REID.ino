@@ -76,10 +76,11 @@ void setup() {
 void loop() {
   for (int i=0; i<num_cards; i++){
 	  if (digitalRead(BUTTON[i]) == HIGH){
-		writeRFID(i);
-	  	serial.print('button pushed')}
+		  writeRFID(i);
+	  	serial.print('button pushed')};
   data = rfid_read();
-  checkcard(data);}
+  checkcard(data);
+  }
 }
 
 void rfid_read(){
