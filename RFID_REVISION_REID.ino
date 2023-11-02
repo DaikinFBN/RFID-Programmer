@@ -115,7 +115,6 @@ void checkcard(buffer){
       digitalWrite(LED[i], LEDState[i]);
     }
   }
-}
 
  
 void writeRFID(byte cardnumber){
