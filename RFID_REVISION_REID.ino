@@ -18,6 +18,10 @@ int LEDState[] = {0,0,0};
 int lastState[] = {0,0,0};
 // data of the three cards we use at FBN
 int num_cards = 3;
+byte data[16]={0x00, 0x00, 0x00, 0x00, 
+                      0x00, 0x00, 0x00, 0x00, 
+                      0x00, 0x00, 0x00, 0x00,
+                      0x00, 0x00, 0x00, 0x00,};
 byte cards[3][16] = {{0x00, 0x01, 0x53, 0x44, // SD-CLR , Clear move
                       0x00, 0x00, 0x00, 0x99, 
                       0x00, 0x05, 0x00, 0x00,
@@ -70,15 +74,12 @@ void setup() {
 }
 
 void loop() {
-  for (int i=0; i<num_cards; i++){
-	  if (digitalRead(BUTTON[i]) == HIGH){
-		writeRFID(i);
-	  	Serial.print('button pushed');
-      }
-  }
-  data = rfid_read();				
-  checkcard(data);		//Says that data is not declared in this scope
-
+  for (int i=0, i<num_cards, i++){
+	  if (digitalRead(BUTTON[i]) == HIGH)){
+		  writeRFID(i);
+	  	serial.print('button pushed')}};
+  data = rfid_read();
+  checkcard(data);
 }
 
 void rfid_read(){
@@ -86,33 +87,32 @@ void rfid_read(){
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
-    errorLED(2);
+    blinkLED(2);
     return;
     }
   
   size = sizeof(buffer);
   status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
-      errorLED(3);
+      blinkLED(3);
       return;
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
   if (status != MFRC522::STATUS_OK) {
-      errorLED(5);
+      blinkLED(5);
   }
 return (buffer);
 }
 
-void checkcard(int buffer){
+void checkcard(buffer){
   for (int i = 0; i < num_cards; i++){
     if (buffer == cards[i]){
-	    int LEDState = HIGH;    //not sure if this should be declared as an integer 
+	    LEDState = HIGH;
     }
-	  else
-      int LEDState = LOW;
+	  else{LEDState=LOW}
       digitalWrite(LED[i], LEDState[i]);
+    }
   }
-}
 
  
 void writeRFID(byte cardnumber){
@@ -125,16 +125,16 @@ void writeRFID(byte cardnumber){
   size = sizeof(buffer);
   status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
-    errorLED(6);
+    blinkLED(6);
     return;
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(blockAddr, dataBlock, 16);
-  if (status != MFRC522::STATUS_OK) {
-    errorLED(7);
+    if (status != MFRC522::STATUS_OK) {
+      blinkLED(7);
   }
 }
 
-void errorLED(int blinks){
+void blinkLED(int blinks){
   for (int i = 0; i < blinks; i++){
     digitalWrite(LEDerror, HIGH);
     delay(500);
@@ -142,3 +142,4 @@ void errorLED(int blinks){
     delay(500);
   }
 }
+
