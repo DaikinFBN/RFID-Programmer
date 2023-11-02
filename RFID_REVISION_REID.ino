@@ -74,10 +74,10 @@ void setup() {
 }
 
 void loop() {
-  for (int i=0, i<num_cards, i++){
+  for (i=0, i<num_cards, i++){
 	  if (digitalRead(BUTTON[i]) == HIGH)){
-		  writeRFID(i);
-	  	serial.print('button pushed')}};
+		writeRFID(i);
+	  	serial.print('button pushed'}}
   data = rfid_read();
   checkcard(data);
 }
@@ -109,10 +109,11 @@ void checkcard(buffer){
     if (buffer == cards[i]){
 	    LEDState = HIGH;
     }
-	  else{LEDState=LOW}
-      digitalWrite(LED[i], LEDState[i]);
+	  else{LEDState=LOW;}
+      digitalWrite(LED[i], LEDState[i]);;
     }
   }
+}
 
  
 void writeRFID(byte cardnumber){
@@ -129,8 +130,8 @@ void writeRFID(byte cardnumber){
     return;
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(blockAddr, dataBlock, 16);
-    if (status != MFRC522::STATUS_OK) {
-      blinkLED(7);
+  if (status != MFRC522::STATUS_OK) {
+    blinkLED(7);
   }
 }
 
@@ -142,4 +143,3 @@ void blinkLED(int blinks){
     delay(500);
   }
 }
-
