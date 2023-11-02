@@ -77,7 +77,8 @@ void loop() {
   for (int i=0; i<num_cards; i++){
 	  if (digitalRead(BUTTON[i]) == HIGH){
 		  writeRFID(i);
-	  	serial.print('button pushed')};
+	  	Serial.print('button pushed');
+    }
   data = rfid_read();
   checkcard(data);
   }
@@ -111,7 +112,7 @@ void checkcard(buffer){
 	    LEDState = HIGH;
     }
 	  else{LEDState=LOW;}
-      digitalWrite(LED[i], LEDState[i]);;
+      digitalWrite(LED[i], LEDState[i]);
     }
   }
 }
