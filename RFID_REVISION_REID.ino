@@ -79,44 +79,37 @@ void loop() {
 		  writeRFID(i);
 	  	Serial.print('button pushed');
     }
-  data = rfid_read();
-  checkcard(data);
-  }
+ 
+   }
+ checkcard();
 }
 
-void rfid_read(){
-    MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+void checkcard(){
+  MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
     blinkLED(2);
-    return;
     }
   
   size = sizeof(buffer);
   status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
       blinkLED(3);
-      return;
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
   if (status != MFRC522::STATUS_OK) {
       blinkLED(5);
   }
-return (buffer);
-}
-
-void checkcard(buffer){
   for (int i = 0; i < num_cards; i++){
     if (buffer == cards[i]){
-	    LEDState = HIGH;
+	    LEDState[i] = HIGH;
     }
-	  else{LEDState=LOW;}
+	  else{LEDState[i]=LOW;}
       digitalWrite(LED[i], LEDState[i]);
     }
   }
 
- 
 void writeRFID(byte cardnumber){
   // Load card data to write
   byte dataBlock[16];
