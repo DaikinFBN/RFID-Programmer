@@ -74,14 +74,17 @@ void setup() {
 }
 
 void loop() {
+  if ( ! mfrc522.PICC_IsNewCardPresent())
+        return;
   for (int i=0; i<num_cards; i++){
 	  if (digitalRead(BUTTON[i]) == HIGH){
 		  writeRFID(i);
 	  	Serial.print('button pushed');
     }
- 
-   }
- checkcard();
+  
+  }
+checkcard();
+return;
 }
 
 void checkcard(){
@@ -91,15 +94,18 @@ void checkcard(){
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
     blinkLED(2);
     }
-  
+   Serial.print(piccType);
   size = sizeof(buffer);
   status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
       blinkLED(3);
+     
+      
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
   if (status != MFRC522::STATUS_OK) {
       blinkLED(5);
+      
   }
   for (int i = 0; i < num_cards; i++){
     if (buffer == cards[i]){
@@ -107,9 +113,12 @@ void checkcard(){
     }
 	  else{LEDState[i]=LOW;}
       digitalWrite(LED[i], LEDState[i]);
+      
     }
+  
+   
   }
-
+ 
 void writeRFID(byte cardnumber){
   // Load card data to write
   byte dataBlock[16];
@@ -135,5 +144,7 @@ void blinkLED(int blinks){
     delay(500);
     digitalWrite(LEDerror, LOW);
     delay(500);
-  }
+    
+  }delay(2000);
+  
 }
