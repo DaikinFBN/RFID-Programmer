@@ -76,14 +76,15 @@ void setup() {
 void loop() {
   if ( ! mfrc522.PICC_IsNewCardPresent())
         return;
-  for (int i=0; i<num_cards; i++){
-	  if (digitalRead(BUTTON[i]) == HIGH){
+  if ( ! mfrc522.PICC_ReadCardSerial())
+        return;
+    for (int i=0; i<num_cards; i++){
+	    if (digitalRead(BUTTON[i]) == HIGH){
 		  writeRFID(i);
 	  	Serial.print('button pushed');
     }
-  
+  checkcard();
   }
-checkcard();
 return;
 }
 
