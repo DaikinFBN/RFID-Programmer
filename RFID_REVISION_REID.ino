@@ -18,10 +18,6 @@ int LEDState[] = {0,0,0};
 int lastState[] = {0,0,0};
 // data of the three cards we use at FBN
 int num_cards = 3;
-byte data[16]={0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00, 
-                      0x00, 0x00, 0x00, 0x00,
-                      0x00, 0x00, 0x00, 0x00,};
 byte cards[3][16] = {{0x00, 0x01, 0x53, 0x44, // SD-CLR , Clear move
                       0x00, 0x00, 0x00, 0x99, 
                       0x00, 0x05, 0x00, 0x00,
@@ -74,53 +70,97 @@ void setup() {
 }
 
 void loop() {
-  if ( ! mfrc522.PICC_IsNewCardPresent())
-        return;
-  if ( ! mfrc522.PICC_ReadCardSerial())
-        return;
-    for (int i=0; i<num_cards; i++){
-	    if (digitalRead(BUTTON[i]) == HIGH){
-		  writeRFID(i);
-	  	Serial.print('button pushed');
-    }
-  checkcard();
-  }
-return;
-}
 
-void checkcard(){
-  MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
+  if (digitalRead(BUTTON[0]) == HIGH || digitalRead(BUTTON[1]) == HIGH || digitalRead(BUTTON[2]) == HIGH){
+    
+    byte size = sizeof(buffer);
+    status = (MFRC522::StatusCode) mfrc522.PICC_WakeupA(buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        blinkLED(1);
+    }
+
+    if ( ! mfrc522.PICC_ReadCardSerial())
+      return;
+      
+      writeRFID(0);
+      
+  }
+  else {
+    // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
+    if ( ! mfrc522.PICC_IsNewCardPresent())
+        return;
+
+    // Select one of the cards
+    if ( ! mfrc522.PICC_ReadCardSerial())
+        return;
+        
+    // Check for compatibility
+    MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
     &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
     blinkLED(2);
+    return;
     }
-   Serial.print(piccType);
+    rfid_read();
+  }
+    mfrc522.PICC_HaltA(); // Halt PICC
+    mfrc522.PCD_StopCrypto1(); // Stop encryption on PCD
+}
+
+void writeRFID(byte cardIndex) {
+    // Check for the presence of a card
+    if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
+        Serial.println("No card detected for writing");
+        return;
+    }
+ 
+    // Authenticate using the key for the block
+    byte blockAddr = 4; // Example block address for writing
+    MFRC522::StatusCode status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockAddr, &key, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print("Authentication failed: ");
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    }
+ 
+    // Write data to the block
+    status = mfrc522.MIFARE_Write(blockAddr, cards[cardIndex], 16); // Write 16 bytes from cards[cardIndex]
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print("Write failed: ");
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        return;
+    }
+ 
+    Serial.println("Write successful");
+ 
+    // Halt PICC and stop encryption on PCD
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
+}
+
+void rfid_read(){
+  
   size = sizeof(buffer);
   status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
   if (status != MFRC522::STATUS_OK) {
       blinkLED(3);
-     
-      
+      return;
   }
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
   if (status != MFRC522::STATUS_OK) {
       blinkLED(5);
-      
   }
+
   for (int i = 0; i < num_cards; i++){
-    if (buffer == cards[i]){
-	    LEDState[i] = HIGH;
+    if (buffer[2] == cards[i][2] && buffer[7] == cards[i][7]){
+      changeLED(i);
+
     }
-	  else{LEDState[i]=LOW;}
-      digitalWrite(LED[i], LEDState[i]);
-      
-    }
-  
-   
   }
- 
-void writeRFID(byte cardnumber){
+}
+  
+void verify(byte cardnumber){
   // Load card data to write
   byte dataBlock[16];
   for (byte i = 0; i < 16; i++) {
@@ -137,6 +177,24 @@ void writeRFID(byte cardnumber){
   if (status != MFRC522::STATUS_OK) {
     blinkLED(7);
   }
+  // checking all bytes match the card wrote
+  status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+  if (status != MFRC522::STATUS_OK) {
+    blinkLED(5);
+  }
+  byte count = 0;
+  for (byte i = 0; i < 16; i++) {
+      if (buffer[i] == dataBlock[i])
+          count++;
+  }
+  if (count != 16) {
+      blinkLED(4);
+      return;
+  }
+  else {
+    delay(500);
+    changeLED(cardnumber);
+  }
 }
 
 void blinkLED(int blinks){
@@ -145,7 +203,15 @@ void blinkLED(int blinks){
     delay(500);
     digitalWrite(LEDerror, LOW);
     delay(500);
-    
-  }delay(2000);
-  
+  }
+}
+
+void changeLED(int number){
+  for (int i = 0; i < num_cards; i++){
+    LEDState[i] = LOW;
+  }
+  LEDState[number] = HIGH;
+  for (int i = 0; i < num_cards; i++){
+    digitalWrite(LED[i], LEDState[i]);
+  }
 }
