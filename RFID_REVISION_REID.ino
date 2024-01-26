@@ -70,19 +70,20 @@ void setup() {
 }
 
 void loop() {
-
-  if (digitalRead(BUTTON[0]) == HIGH || digitalRead(BUTTON[1]) == HIGH || digitalRead(BUTTON[2]) == HIGH){
-    
+for (int i=0; i<num_cards; i++){
+  if (digitalRead(BUTTON[i]) == HIGH){
     byte size = sizeof(buffer);
     status = (MFRC522::StatusCode) mfrc522.PICC_WakeupA(buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         blinkLED(1);
+        return;
     }
 
     if ( ! mfrc522.PICC_ReadCardSerial())
       return;
       
-      writeRFID(0);
+      
+     writeRFID(i); 
       
   }
   else {
@@ -107,33 +108,39 @@ void loop() {
     mfrc522.PICC_HaltA(); // Halt PICC
     mfrc522.PCD_StopCrypto1(); // Stop encryption on PCD
 }
+}
 
-void writeRFID(byte cardIndex) {
+void writeRFID(byte cardnumber) {
     // Check for the presence of a card
-    if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
-        Serial.println("No card detected for writing");
+    if (! mfrc522.PICC_IsNewCardPresent() || ! mfrc522.PICC_ReadCardSerial()) {
+        Serial.println("No card detected");
         return;
     }
- 
+
+    // Load card data to write
+    byte dataBlock[16];
+    for (byte i = 0; i < 16; i++) {
+        dataBlock[i] = cards[cardnumber][i];
+    }
+
     // Authenticate using the key for the block
-    byte blockAddr = 4; // Example block address for writing
     MFRC522::StatusCode status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockAddr, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         Serial.print("Authentication failed: ");
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }
- 
+
     // Write data to the block
-    status = mfrc522.MIFARE_Write(blockAddr, cards[cardIndex], 16); // Write 16 bytes from cards[cardIndex]
+    status = mfrc522.MIFARE_Write(blockAddr, dataBlock, 16);
     if (status != MFRC522::STATUS_OK) {
         Serial.print("Write failed: ");
         Serial.println(mfrc522.GetStatusCodeName(status));
         return;
     }
- 
+
     Serial.println("Write successful");
- 
+
     // Halt PICC and stop encryption on PCD
     mfrc522.PICC_HaltA();
     mfrc522.PCD_StopCrypto1();
