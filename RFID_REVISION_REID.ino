@@ -70,20 +70,19 @@ void setup() {
 }
 
 void loop() {
-for (int i=0; i<num_cards; i++){
-  if (digitalRead(BUTTON[i]) == HIGH){
+
+  if (digitalRead(BUTTON[0]) == HIGH || digitalRead(BUTTON[1]) == HIGH || digitalRead(BUTTON[2]) == HIGH){
+    
     byte size = sizeof(buffer);
     status = (MFRC522::StatusCode) mfrc522.PICC_WakeupA(buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         blinkLED(1);
-        return;
     }
 
     if ( ! mfrc522.PICC_ReadCardSerial())
       return;
       
-      
-     writeRFID(i); 
+      writeRFID();
       
   }
   else {
@@ -107,7 +106,6 @@ for (int i=0; i<num_cards; i++){
   }
     mfrc522.PICC_HaltA(); // Halt PICC
     mfrc522.PCD_StopCrypto1(); // Stop encryption on PCD
-}
 }
 
 void writeRFID(byte cardnumber) {
@@ -222,3 +220,4 @@ void changeLED(int number){
     digitalWrite(LED[i], LEDState[i]);
   }
 }
+
